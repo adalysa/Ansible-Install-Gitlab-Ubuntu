@@ -1,0 +1,46 @@
+- name: Gitlab
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update and Upgrade
+      apt:
+        upgrade: 'yes'
+        update_cache: yes
+    - name: Install dependencies
+      apt:
+        state: present
+        name:
+          - curl
+          - openssh-server
+          - ca-certificates
+          - perl 
+          - tzdata
+          - postfix
+    - name: Updates!
+      apt:
+        upgrade: 'yes'
+        update_cache: yes
+    - name: Firewall- allow https traffic
+      ufw:
+        rule: allow
+        port: '443'
+    - name: Firewall- allow http traffic
+      ufw:
+        rule: allow
+        port: '80'
+    - name: Add Gitlab Repo
+      shell: curl -sL https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | sudo bash
+    - name: Install Gitlab
+      apt:
+        state: present
+        name: 
+          - gitlab-ce
+    - name: Set Gitlab URL
+      replace:
+        path: /etc/gitlab/gitlab.rb
+        regexp: 'http://gitlab.example.com'
+        replace: '{{external_url}}'
+    - name: reconfig gitlab file
+      become: yes
+      shell: gitlab-ctl reconfigure
+
